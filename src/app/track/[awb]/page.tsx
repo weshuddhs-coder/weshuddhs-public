@@ -154,9 +154,17 @@ function MilestoneIcon({ k, active }: { k: string; active: boolean }) {
 // Shared AWB-or-order lookup form — powers the /track/lookup landing page
 // AND is re-rendered inline inside the "not found" card so a typo is
 // retryable in place, without leaving the branded page.
-function LookupForm({ primary, autoFocus }: { primary: string; autoFocus?: boolean }) {
+function LookupForm({
+  primary,
+  autoFocus,
+  initialValue,
+}: {
+  primary: string;
+  autoFocus?: boolean;
+  initialValue?: string;
+}) {
   const router = useRouter();
-  const [value, setValue] = useState('');
+  const [value, setValue] = useState(initialValue ?? '');
   const [phone, setPhone] = useState('');
   const [touched, setTouched] = useState(false);
 
@@ -231,7 +239,7 @@ function LookupForm({ primary, autoFocus }: { primary: string; autoFocus?: boole
 // Branded landing card for /track/lookup with no ?order= — previously a
 // dead-end: the page fetched with an empty query, got `missing_query`, and
 // permanently rendered the "not found" error card with no way to search.
-function LookupLandingCard({ primary }: { primary: string }) {
+function LookupLandingCard({ primary, initialValue }: { primary: string; initialValue?: string }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
       <div className="text-center mb-6">
@@ -245,10 +253,12 @@ function LookupLandingCard({ primary }: { primary: string }) {
         </div>
         <h1 className="text-base font-semibold text-slate-900">Track your order</h1>
         <p className="text-sm text-slate-500 mt-1">
-          Enter your AWB (tracking) number, or your order number with the phone number used to order.
+          {initialValue
+            ? 'Confirm the phone number used on this order to see its status.'
+            : 'Enter your AWB (tracking) number, or your order number with the phone number used to order.'}
         </p>
       </div>
-      <LookupForm primary={primary} autoFocus />
+      <LookupForm primary={primary} autoFocus initialValue={initialValue} />
     </div>
   );
 }
