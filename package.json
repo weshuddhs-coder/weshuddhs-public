@@ -2,7 +2,7 @@
   "name": "weshuddhs-public",
   "version": "1.0.0",
   "private": true,
-  "description": "WeShuddhs customer-facing pages (track + invoice). Zero CRM code — reads only scoped public APIs on crm.weshuddhs.in.",
+  "description": "WeShuddhs customer-facing pages (track + invoice). Zero CRM code \u2014 reads only scoped public APIs on crm.weshuddhs.in.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -12,7 +12,8 @@
   "dependencies": {
     "next": "14.2.15",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "@napi-rs/canvas": "^0.1.56"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
