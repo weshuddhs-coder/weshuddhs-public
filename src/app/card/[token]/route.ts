@@ -38,15 +38,15 @@ function ensureFonts() {
 }
 const FAM = '"Noto Sans", "Noto Sans Devanagari"';
 
-let logoCache: { buf: Buffer; at: number } | null = null;
+// Bundled white-background wordmark (assets/logo.png). The CRM's
+// /api/brand/logo variant sits on a black plate and looks wrong on the card.
+let logoCache: Buffer | null = null;
 async function getLogo(): Promise<Buffer | null> {
-  if (logoCache && Date.now() - logoCache.at < 6 * 3600_000) return logoCache.buf;
+  if (logoCache) return logoCache;
   try {
-    const res = await fetch(`${CRM_API}/api/brand/logo`, { cache: 'no-store' });
-    if (!res.ok) return null;
-    const buf = Buffer.from(await res.arrayBuffer());
-    logoCache = { buf, at: Date.now() };
-    return buf;
+    const { readFile } = await import('node:fs/promises');
+    logoCache = await readFile(path.join(process.cwd(), 'assets', 'logo.png'));
+    return logoCache;
   } catch {
     return null;
   }
@@ -99,9 +99,9 @@ function drawCard(ctx: SKRSContext2D, inv: InvoiceData, logo: Buffer | null, log
   }
   const badge =
     inv.paymentType === 'prepaid'
-      ? { text: 'ORDER CONFIRMED ✓', bg: '#EFF5E2', fg: '#3F6600' }
+      ? { text: 'ORDER CONFIRMED', bg: '#EFF5E2', fg: '#3F6600' }
       : inv.paymentType === 'partial'
-        ? { text: 'ORDER CONFIRMED ✓', bg: '#E7F0FA', fg: '#1B4F7E' }
+        ? { text: 'ORDER CONFIRMED', bg: '#E7F0FA', fg: '#1B4F7E' }
         : { text: 'ORDER RECEIVED', bg: '#FFF4E0', fg: '#8A5A00' };
   ctx.font = `bold 32px ${FAM}`;
   const bw = ctx.measureText(badge.text).width + 72;
@@ -173,7 +173,7 @@ function drawCard(ctx: SKRSContext2D, inv: InvoiceData, logo: Buffer | null, log
     label = 'Pay at Delivery / देय';
     amount = inv.codDue;
     pill = { text: 'PARTIAL', bg: '#E7F0FA', fg: '#1B4F7E' };
-    sub = `${rup(inv.advancePaid)} advance paid online ✓`;
+    sub = `${rup(inv.advancePaid)} advance paid online`;
   } else {
     label = 'Pay at Delivery / देय';
     amount = inv.codDue;
