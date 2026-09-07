@@ -23,7 +23,7 @@ import { friendlyName } from '@/lib/track/friendly-name';
 // bundle, so a bare process.env value would be undefined at runtime.
 const CRM_API = 'https://crm.weshuddhs.in';
 
-const FALLBACK_SUPPORT_WA = '918690896808'; // WeShuddhs support WhatsApp
+const FALLBACK_SUPPORT_WA = '919412304567'; // WeShuddhs support WhatsApp
 
 interface Milestone {
   key: string;
