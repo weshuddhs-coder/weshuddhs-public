@@ -276,6 +276,10 @@ function TrackPageInner() {
   // order number, not an AWB (there is no AWB yet when the order is placed), so
   // this segment is regularly something like "85113". Treating it as an AWB
   // looked up a tracking number that cannot exist and dead-ended the customer.
+  // Signed track token from /t/<token> (middleware rewrites it here). It is
+  // unguessable, so it authorises on its own — no phone challenge, same idea
+  // as the /invoice/<token> page.
+  const trackToken = search.get('token') || '';
   const segment = awb.toLowerCase() === 'lookup' ? '' : awb;
   const segmentIsOrderRef = segment.length > 0 && !looksLikeAwb(segment);
   const pendingOrderRef = orderRef || (segmentIsOrderRef ? segment : '');
@@ -283,7 +287,8 @@ function TrackPageInner() {
   // either nothing to look up at all, or an order number whose phone we still
   // need (an order-number lookup is phone-verified so nobody can read someone
   // else's order by guessing a number).
-  const showLandingLookup = (!segment && !orderRef) || (!!pendingOrderRef && !phone);
+  const showLandingLookup =
+    !trackToken && ((!segment && !orderRef) || (!!pendingOrderRef && !phone));
 
   const [data, setData] = useState<TrackData | null>(null);
   const [showJourney, setShowJourney] = useState(false);
@@ -333,7 +338,9 @@ function TrackPageInner() {
     setError(null);
 
     const qs = new URLSearchParams();
-    if (segment && !segmentIsOrderRef) {
+    if (trackToken) {
+      qs.set('token', trackToken);
+    } else if (segment && !segmentIsOrderRef) {
       qs.set('awb', segment);
     } else if (pendingOrderRef) {
       qs.set('order', pendingOrderRef);
@@ -356,7 +363,7 @@ function TrackPageInner() {
     return () => {
       active = false;
     };
-  }, [segment, segmentIsOrderRef, pendingOrderRef, phone, showLandingLookup]);
+  }, [trackToken, segment, segmentIsOrderRef, pendingOrderRef, phone, showLandingLookup]);
 
   const brand = data?.brand;
   const brandName = brand?.brandName || 'WeShuddhs';
