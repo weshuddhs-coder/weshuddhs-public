@@ -272,10 +272,18 @@ function TrackPageInner() {
   // is a placeholder like "lookup".
   const orderRef = search.get('order') || '';
   const phone = search.get('phone') || '';
-  // The bare tracking-domain landing page: /track/lookup with no ?order= yet.
-  // There is nothing to look up — show the branded search card instead of
-  // firing a fetch that can only ever 400.
-  const showLandingLookup = awb.toLowerCase() === 'lookup' && !orderRef;
+  // The WhatsApp "Track Order" button on a PREPAID confirmation carries the
+  // order number, not an AWB (there is no AWB yet when the order is placed), so
+  // this segment is regularly something like "85113". Treating it as an AWB
+  // looked up a tracking number that cannot exist and dead-ended the customer.
+  const segment = awb.toLowerCase() === 'lookup' ? '' : awb;
+  const segmentIsOrderRef = segment.length > 0 && !looksLikeAwb(segment);
+  const pendingOrderRef = orderRef || (segmentIsOrderRef ? segment : '');
+  // Show the branded search card instead of firing a fetch that can only fail:
+  // either nothing to look up at all, or an order number whose phone we still
+  // need (an order-number lookup is phone-verified so nobody can read someone
+  // else's order by guessing a number).
+  const showLandingLookup = (!segment && !orderRef) || (!!pendingOrderRef && !phone);
 
   const [data, setData] = useState<TrackData | null>(null);
   const [showJourney, setShowJourney] = useState(false);
@@ -325,10 +333,10 @@ function TrackPageInner() {
     setError(null);
 
     const qs = new URLSearchParams();
-    if (awb && awb.toLowerCase() !== 'lookup') {
-      qs.set('awb', awb);
-    } else if (orderRef) {
-      qs.set('order', orderRef);
+    if (segment && !segmentIsOrderRef) {
+      qs.set('awb', segment);
+    } else if (pendingOrderRef) {
+      qs.set('order', pendingOrderRef);
       if (phone) qs.set('phone', phone);
     }
 
@@ -348,7 +356,7 @@ function TrackPageInner() {
     return () => {
       active = false;
     };
-  }, [awb, orderRef, phone, showLandingLookup]);
+  }, [segment, segmentIsOrderRef, pendingOrderRef, phone, showLandingLookup]);
 
   const brand = data?.brand;
   const brandName = brand?.brandName || 'WeShuddhs';
@@ -421,7 +429,9 @@ function TrackPageInner() {
         {/* Landing lookup — /track/lookup with no ?order= yet. The bare
             tracking-domain landing page: nothing to fetch, so show the
             branded search card instead of an inevitable 400. */}
-        {showLandingLookup && <LookupLandingCard primary={primary} />}
+        {showLandingLookup && (
+          <LookupLandingCard primary={primary} initialValue={pendingOrderRef || undefined} />
+        )}
 
         {/* Loading */}
         {!showLandingLookup && loading && (
