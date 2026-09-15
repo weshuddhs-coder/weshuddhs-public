@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, Suspense, type FormEvent } from 'react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { friendlyName } from '@/lib/track/friendly-name';
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -266,6 +266,7 @@ function LookupLandingCard({ primary, initialValue }: { primary: string; initial
 function TrackPageInner() {
   const params = useParams();
   const search = useSearchParams();
+  const pathname = usePathname();
   const rawAwb = params?.awb;
   const awb = (Array.isArray(rawAwb) ? rawAwb[0] : rawAwb) || '';
   // Allow the order+phone path via query (?order=&phone=) when the URL segment
@@ -279,7 +280,15 @@ function TrackPageInner() {
   // Signed track token from /t/<token> (middleware rewrites it here). It is
   // unguessable, so it authorises on its own — no phone challenge, same idea
   // as the /invoice/<token> page.
-  const trackToken = search.get('token') || '';
+  // Read it from the PATH first. The middleware rewrite puts ?token= on the
+  // server-side URL only; in the browser useSearchParams() reflects the
+  // address bar (/t/<token>, no query), so reading the query alone left the
+  // token empty and dropped customers on the order-number search card
+  // (Manoj, 15 Sep 2026). usePathname() returns the address-bar path.
+  const trackToken =
+    (pathname && pathname.startsWith('/t/') ? decodeURIComponent(pathname.slice(3)) : '') ||
+    search.get('token') ||
+    '';
   const segment = awb.toLowerCase() === 'lookup' ? '' : awb;
   const segmentIsOrderRef = segment.length > 0 && !looksLikeAwb(segment);
   const pendingOrderRef = orderRef || (segmentIsOrderRef ? segment : '');
